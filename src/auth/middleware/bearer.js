@@ -1,20 +1,29 @@
 'use strict';
 
-const users = require('../models/users.js')
+// const users = require('../models/users.js');
+const jwt = require('jsonwebtoken');
 
 module.exports = async (req, res, next) => {
 
+  if (!req.headers.authorization) { next('Invalid Login');}
+
+  const token = req.headers.authorization.split(' ').pop();
+  
   try {
 
-    if (!req.headers.authorization) { next('Invalid Login') }
+    // if (!req.headers.authorization) { next('Invalid Login');}
 
-    const token = req.headers.authorization.split(' ').pop();
-    const validUser = await users.authenticateWithToken(token);
-
-    req.user = validUser;
-    req.token = validUser.token;
-
+    // const token = req.headers.authorization.split(' ').pop();
+    const validUser = jwt.verify(token, process.env.SECRET);
+    if(validUser) {
+      req.user = validUser;
+      req.token = validUser.token;
+      next();
+    } else {
+      next('Invalid User');
+    }
   } catch (e) {
-    res.status(403).send('Invalid Login');;
+    res.status(403).send('Invalid Login');
   }
-}
+};
+
